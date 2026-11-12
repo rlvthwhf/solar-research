@@ -1,0 +1,473 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#176b3a">
+<title>野立て太陽光発電施設 位置情報マップ</title>
+<style>
+:root{--green:#176b3a;--green2:#0f5132;--pale:#eaf5ed;--line:#c9ddd0;--danger:#a92f2f;--ink:#173126;--muted:#5a6e62;--amber:#a76100}
+*{box-sizing:border-box}html{scroll-behavior:smooth}body{margin:0;background:#f3f7f4;color:var(--ink);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Yu Gothic UI","Yu Gothic",Meiryo,sans-serif}
+header{position:sticky;top:0;z-index:40;background:linear-gradient(135deg,var(--green2),var(--green));color:#fff;padding:10px 14px 0;box-shadow:0 2px 9px #0004}header h1{font-size:1.15rem;margin:0}header small{display:block;margin-top:2px;opacity:.9;font-size:.78rem}
+nav{display:flex;gap:4px;overflow-x:auto;margin-top:8px}nav button{flex:1;min-width:64px;border:0;background:transparent;color:#d8eedd;font:inherit;font-weight:750;padding:9px 6px;border-bottom:4px solid transparent;cursor:pointer;white-space:nowrap}nav button.active{color:#fff;border-bottom-color:#ffd166}
+main{max-width:980px;margin:auto;padding:10px 12px 40px}.card{background:#fff;border:1px solid var(--line);border-radius:16px;padding:14px;margin:10px 0;box-shadow:0 2px 10px #1731260b}h2{font-size:1.06rem;margin:0 0 10px}h3{font-size:.98rem;margin:14px 0 6px}.hint{font-size:.86rem;color:var(--muted);line-height:1.55}.required::after{content:" 必須";font-size:.7rem;color:#fff;background:#b13d38;border-radius:8px;padding:2px 6px;vertical-align:2px}
+label{font-weight:750;display:block;margin:10px 0 5px}input,select,textarea{width:100%;font:inherit;font-size:16px;padding:10px 11px;border:2px solid #b8cdbf;border-radius:11px;background:#fff;color:var(--ink)}input:focus,select:focus,textarea:focus{outline:3px solid #95c9a555;border-color:var(--green)}textarea{min-height:80px;resize:vertical}
+.grid{display:grid;grid-template-columns:1fr;gap:0 10px}.two{display:grid;grid-template-columns:1fr 1fr;gap:8px}.unit-wrap{display:grid;grid-template-columns:1fr auto;align-items:center;gap:8px}.unit{font-weight:750}
+.actions{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.btn{border:0;border-radius:12px;min-height:46px;padding:9px;font-weight:800;font-size:15px;cursor:pointer}.btn.sm{min-height:38px;font-size:.88rem;padding:6px 9px}.btn:disabled{opacity:.45;cursor:not-allowed}.primary{background:var(--green);color:#fff}.secondary{background:var(--pale);color:#174a2b;border:1px solid #86b394}.danger{background:#fff0f0;color:var(--danger);border:1px solid #df9d9d}.warning{background:#fff7e7;color:#7c4700;border:1px solid #e3be79}.full{grid-column:1/-1}
+.status{padding:10px;border-radius:10px;background:#eef4ff;color:#173c61;margin-top:8px;line-height:1.5;white-space:pre-wrap}.status.error{background:#fff0f0;color:#8a1f1f}.status.ok{background:#e9f7ec;color:#14532d}.status.warn{background:#fff7e7;color:#7a4800}
+.coords{font-family:ui-monospace,Consolas,monospace;background:#f0f4f1;padding:9px;border-radius:10px;line-height:1.6;margin-top:8px;overflow-wrap:anywhere}
+.hidden{display:none!important}.badge{display:inline-block;background:var(--pale);border-radius:999px;padding:2px 8px;margin:2px 3px 2px 0;font-size:.78rem;font-weight:700}.b-new{background:#dbe8ff;color:#123d8a}.b-ok{background:#dcf3e2;color:#14532d}.b-ng{background:#ffe0e0;color:#8a1f1f}.b-nd{background:#ffeccc;color:#7a4800}
+.rec{border-top:1px solid #d9e5dc;padding:10px 0;display:grid;grid-template-columns:1fr auto;gap:8px;align-items:center;scroll-margin-top:150px;transition:background .4s}.rec:first-child{border-top:0}.rec.hl{background:#fff4c2;outline:3px solid #f0b400;border-radius:10px;padding-left:8px;padding-right:8px}.rec-title{font-weight:850}.rec small{display:block;color:var(--muted);line-height:1.5}
+.toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#173126;color:#fff;padding:10px 16px;border-radius:12px;z-index:99;max-width:92vw;box-shadow:0 4px 14px #0005;font-weight:700;opacity:0;transition:opacity .25s;pointer-events:none}.toast.show{opacity:1}
+#map{position:relative;height:62vh;min-height:340px;overflow:hidden;background:#dfe7e2;border-radius:12px;touch-action:none;user-select:none;cursor:grab}#pane{position:absolute;left:0;top:0;width:100%;height:100%;transform-origin:0 0}#tiles img{position:absolute;width:256px;height:256px;max-width:none;pointer-events:none}
+.pin{position:absolute;transform:translate(-14px,-38px);cursor:pointer;z-index:2}.pin svg{display:block;filter:drop-shadow(0 2px 2px #0006)}.pin .lbl{position:absolute;left:28px;top:4px;background:#fffffff0;border:1px solid #9bb;border-radius:6px;padding:1px 5px;font-size:12px;font-weight:800;white-space:nowrap;color:#123}.pin.sel{z-index:5}.pin.sel svg{transform:scale(1.25);transform-origin:50% 100%}
+.me{position:absolute;width:16px;height:16px;margin:-8px 0 0 -8px;border-radius:50%;background:#1e88ff;border:3px solid #fff;box-shadow:0 0 0 6px #1e88ff44;z-index:3}
+.mctl{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:6px;z-index:10}.mctl button{width:42px;height:42px;border-radius:10px;border:1px solid #9bb;background:#fff;font-size:18px;font-weight:900;cursor:pointer;box-shadow:0 1px 4px #0003}
+.attr{position:absolute;right:0;bottom:0;background:#ffffffcc;font-size:11px;padding:2px 6px;z-index:10}.pickbar{position:absolute;left:8px;right:60px;top:8px;background:#fff4da;border:2px solid #d9a02e;border-radius:10px;padding:8px;font-weight:800;z-index:10;color:#6f4300}
+.legend{display:flex;flex-wrap:wrap;gap:6px 14px;font-size:.82rem;margin-top:8px;color:var(--muted)}.legend span{display:inline-flex;align-items:center;gap:4px}.dot{width:13px;height:13px;border-radius:50%;display:inline-block}
+.kv{display:grid;grid-template-columns:8.5em 1fr;gap:4px 10px;font-size:.93rem;line-height:1.5}.kv div:nth-child(odd){color:var(--muted);font-weight:700}
+.photos{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin-top:8px}.ph{border:1px solid var(--line);border-radius:10px;padding:5px;background:#fafcfb}.ph img{width:100%;height:96px;object-fit:cover;border-radius:7px;background:#111;display:block}.ph select{font-size:14px;padding:5px;margin-top:4px}.ph small{display:block;font-size:.72rem;color:var(--muted);margin-top:3px;overflow-wrap:anywhere}
+.survey{border:1px solid var(--line);border-radius:12px;padding:10px;margin:8px 0;background:#fbfdfc}
+table.map-tbl{border-collapse:collapse;width:100%;font-size:.85rem}table.map-tbl td,table.map-tbl th{border:1px solid var(--line);padding:4px 6px;text-align:left}
+@media(min-width:680px){.grid{grid-template-columns:1fr 1fr}.span-2{grid-column:1/-1}.grid3{grid-template-columns:1fr 1fr 1fr}}
+</style>
+</head>
+<body>
+<header>
+  <h1>☀ 野立て太陽光発電施設 位置情報マップ</h1>
+  <small>施設台帳・現地調査記録（単体HTML／記録はこの端末のブラウザ内に保存）</small>
+  <nav id="nav">
+    <button data-view="map" class="active">🗺 地図</button>
+    <button data-view="list">📋 一覧</button>
+    <button data-view="facility">＋ 施設登録</button>
+    <button data-view="survey">📷 現地調査</button>
+    <button data-view="data">💾 データ</button>
+  </nav>
+</header>
+<main>
+
+<section class="card" id="filterCard">
+  <div class="unit-wrap"><input id="fKeyword" placeholder="🔍 事業者名・住所・設備ID・その他・備考で検索"><button class="btn sm secondary" id="fToggle" type="button">絞込▼</button></div>
+  <div id="fMore" class="hidden">
+    <div class="grid grid3">
+      <div><label for="fStatus">新規・既存</label><select id="fStatus"><option value="">すべて</option><option>新規</option><option>既存</option></select></div>
+      <div><label for="fNotif">条例届出</label><select id="fNotif"><option value="">すべて</option><option>有</option><option>無</option><option>不達</option><option value="未届出">無＋不達</option><option value="未入力">未入力</option></select></div>
+      <div><label for="fFit">FIT区分</label><select id="fFit"><option value="">すべて</option><option>FIT</option><option>非FIT</option><option>自家消費</option><option value="未入力">未入力</option></select></div>
+      <div><label for="fVolt">電圧区分</label><select id="fVolt"><option value="">すべて</option><option>低圧</option><option>高圧</option><option>特高</option><option value="不明">出力未入力</option></select></div>
+      <div><label for="fSurvey">現地調査</label><select id="fSurvey"><option value="">すべて</option><option value="yes">調査済</option><option value="no">未調査</option></select></div>
+      <div><label for="fCoord">座標</label><select id="fCoord"><option value="">すべて</option><option value="yes">設定済</option><option value="no">未設定</option></select></div>
+    </div>
+    <div class="actions"><button class="btn sm secondary full" id="fClear" type="button">条件をクリア</button></div>
+  </div>
+  <div class="hint" id="fCount" style="margin-top:6px"></div>
+</section>
+
+<section class="view card" id="view-map">
+  <div id="map">
+    <div id="pane"><div id="tiles"></div><div id="markers"></div></div>
+    <div class="mctl">
+      <button type="button" id="zIn" title="拡大">＋</button>
+      <button type="button" id="zOut" title="縮小">－</button>
+      <button type="button" id="mLocate" title="現在地">◎</button>
+      <button type="button" id="mFit" title="全施設を表示">⤢</button>
+      <button type="button" id="mLayer" title="地図／写真切替">🛰</button>
+    </div>
+    <div id="pickBar" class="pickbar hidden">地図をタップして施設の位置を指定してください <button class="btn sm warning" id="pickCancel" type="button">中止</button></div>
+    <div class="attr">出典：<a href="https://maps.gsi.go.jp/development/ichiran.html" target="_blank" rel="noopener">地理院タイル</a></div>
+  </div>
+  <div class="legend">
+    <span><i class="dot" style="background:#1f6feb"></i>新規</span>
+    <span><i class="dot" style="background:#1a9b45"></i>既存（届出有）</span>
+    <span><i class="dot" style="background:#d62828"></i>既存（届出無）</span>
+    <span><i class="dot" style="background:#f08c00"></i>既存（不達）</span>
+    <span><i class="dot" style="background:#7a7a7a"></i>既存（届出未入力）</span>
+    <span>ピン内の文字　低＝低圧(50kW未満)／高＝高圧／特＝特高(2,000kW以上)／？＝出力未入力</span>
+  </div>
+  <p class="hint">ピンをタップすると、一覧の該当施設へ移動します（一覧の「地図」ボタンで地図に戻れます）。地図の表示には通信が必要です。圏外でも登録・調査記録はできます。</p>
+  <div id="mapInfo" class="hidden" style="margin-top:8px"></div>
+</section>
+
+<section class="view card hidden" id="view-list">
+  <h2>施設一覧（<span id="listCount">0</span>件）</h2>
+  <div class="two"><select id="sortBy"><option value="operator">並び順：事業者名</option><option value="updated">並び順：更新が新しい順</option><option value="lastSurvey">並び順：最終調査日</option><option value="kw">並び順：出力の大きい順</option></select><span></span></div>
+  <div id="list"></div>
+</section>
+
+<section class="view card hidden" id="view-detail"></section>
+
+<section class="view hidden" id="view-facility">
+  <div class="card">
+    <h2 id="facTitle">施設登録（台帳）</h2>
+    <div class="grid">
+      <div><label class="required" for="status">新規・既存の別</label><select id="status"><option value="">選択してください</option><option>新規</option><option>既存</option></select></div>
+      <div><label for="notification">条例に基づく届出（既存届出）</label><select id="notification"><option value="">未入力</option><option>有</option><option>無</option><option>不達</option></select></div>
+      <div><label class="required" for="operator">発電事業者</label><input id="operator" autocomplete="off" placeholder="例：○○ソーラー合同会社"></div>
+      <div><label for="operatorAddress">発電事業者の住所</label><input id="operatorAddress" autocomplete="off"></div>
+      <div class="span-2"><label for="siteAddress">設置場所（所在地）</label><input id="siteAddress" autocomplete="off" placeholder="例：長野県○○市大字○○1234番地"></div>
+      <div><label for="fitType">FIT区分</label><select id="fitType"><option value="">選択してください</option><option>FIT</option><option>非FIT</option><option>自家消費</option></select></div>
+      <div><label for="facilityId">設備ID（FITの場合）</label><input id="facilityId" autocomplete="off" placeholder="例：A123456B78"></div>
+      <div><label for="acKw">出力（パワコン出力・AC）</label><div class="unit-wrap"><input id="acKw" type="number" min="0" step="any" inputmode="decimal"><span class="unit">kW</span></div></div>
+      <div><label for="dcKw">パネル容量（DC）</label><div class="unit-wrap"><input id="dcKw" type="number" min="0" step="any" inputmode="decimal"><span class="unit">kW</span></div></div>
+      <div><label for="startDate">運転開始日</label><input id="startDate" type="date"></div>
+      <div><label>電圧区分（自動判定）</label><div class="coords" id="voltOut">－</div></div>
+      <div class="span-2"><label for="other">その他</label><textarea id="other" placeholder="後で検索できます（例：連絡先不明、標識なし など）"></textarea></div>
+      <div class="span-2"><label for="remarks">備考（自由記入）</label><textarea id="remarks"></textarea></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>位置（緯度・経度）</h2>
+    <div class="actions">
+      <button type="button" class="btn secondary" id="facPhotoBtn">🖼 写真の位置情報から</button>
+      <button type="button" class="btn secondary" id="facGpsBtn">◎ 現在地</button>
+      <button type="button" class="btn secondary" id="facPickBtn">🗺 地図で指定</button>
+      <button type="button" class="btn secondary" id="facGeoBtn">🏠 設置場所の住所から</button>
+    </div>
+    <input id="facPhotoInput" type="file" accept="image/jpeg,image/*" hidden>
+    <div class="grid">
+      <div><label for="lat">緯度</label><input id="lat" type="number" step="any" inputmode="decimal" placeholder="例：36.651289"></div>
+      <div><label for="lon">経度</label><input id="lon" type="number" step="any" inputmode="decimal" placeholder="例：138.181224"></div>
+    </div>
+    <div class="hint" id="coordSrcOut">取得元：未設定</div>
+  </div>
+  <div class="card">
+    <div class="actions">
+      <button type="button" class="btn primary full" id="facSave">✓ 施設を保存</button>
+      <button type="button" class="btn secondary" id="facReset">入力をクリア</button>
+      <button type="button" class="btn warning" id="facCancel">中止して戻る</button>
+    </div>
+    <div id="facMsg" class="status">発電事業者と新規・既存の別を入力して保存してください。</div>
+  </div>
+</section>
+
+<section class="view hidden" id="view-survey">
+  <div class="card">
+    <h2>現地調査の記録</h2>
+    <p class="hint">調査は施設ごとに追加で記録します。前回の調査記録は上書きされません。</p>
+    <label class="required" for="svFacility">調査する施設</label>
+    <input id="svFacFilter" placeholder="施設を絞り込み（事業者名・住所）" style="margin-bottom:6px">
+    <select id="svFacility"></select>
+    <div id="svFacInfo" class="status">施設を選択してください。</div>
+    <div class="grid">
+      <div><label class="required" for="svDate">調査日時</label><input id="svDate" type="datetime-local"></div>
+      <div><label>調査回数（自動）</label><div class="coords" id="svCount">－</div></div>
+      <div><label for="svOrg">調査者の所属</label><input id="svOrg" autocomplete="off" placeholder="例：ゼロカーボン推進課"></div>
+      <div><label class="required" for="svName">調査者の氏名</label><input id="svName" autocomplete="off" placeholder="複数の場合は「・」で区切る"></div>
+    </div>
+  </div>
+  <div class="card">
+    <h2>写真（複数枚可）</h2>
+    <p class="hint">写真ごとに種類（全景・標識など）を選んでください。位置情報付きの写真があれば、調査地点の座標を自動で取得します。</p>
+    <div class="actions">
+      <button type="button" class="btn primary" id="svShoot">📷 撮影</button>
+      <button type="button" class="btn secondary" id="svPick">🖼 写真を選択（複数）</button>
+    </div>
+    <input id="svShootInput" type="file" accept="image/jpeg,image/*" capture="environment" hidden>
+    <input id="svPickInput" type="file" accept="image/jpeg,image/*" multiple hidden>
+    <div id="svPhotos" class="photos"></div>
+    <div id="svPhotoMsg" class="hint">写真未選択</div>
+  </div>
+  <div class="card">
+    <h2>調査地点の座標</h2>
+    <div class="actions">
+      <button type="button" class="btn secondary" id="svGps">◎ 現在地</button>
+      <button type="button" class="btn secondary" id="svUseFac">施設の座標を使用</button>
+    </div>
+    <div class="grid">
+      <div><label for="svLat">緯度</label><input id="svLat" type="number" step="any" inputmode="decimal"></div>
+      <div><label for="svLon">経度</label><input id="svLon" type="number" step="any" inputmode="decimal"></div>
+    </div>
+    <div class="hint" id="svCoordSrc">取得元：未設定</div>
+    <label style="font-weight:600"><input type="checkbox" id="svApplyFac" checked style="width:auto"> 施設の座標が未設定の場合、この座標を施設の位置として登録する</label>
+    <label for="svMemo">調査メモ（現地の状況など）</label><textarea id="svMemo"></textarea>
+  </div>
+  <div class="card">
+    <div class="actions">
+      <button type="button" class="btn primary full" id="svSave">＋ この調査を記録</button>
+      <button type="button" class="btn secondary" id="svReset">入力をクリア</button>
+      <button type="button" class="btn warning" id="svToDetail">施設の詳細へ</button>
+    </div>
+    <div id="svMsg" class="status">施設・調査日時・氏名を入力し、写真を追加して記録してください。</div>
+  </div>
+</section>
+
+<section class="view hidden" id="view-data">
+  <div class="card">
+    <h2>出力（現在の絞り込み条件の施設が対象）</h2>
+    <div class="actions">
+      <button type="button" class="btn primary" id="xlsxBtn">📗 写真入りExcel</button>
+      <button type="button" class="btn secondary" id="csvBtn">📄 施設一覧CSV</button>
+      <button type="button" class="btn secondary full" id="kmlBtn">📍 Googleマイマップ用KML</button>
+    </div>
+    <p class="hint">Excelは「施設一覧」「調査履歴」「調査写真」の3シートです。KMLはGoogleマイマップの「インポート」で読み込むと、Googleマップ上にピンを表示できます。</p>
+    <div id="outMsg" class="status hidden"></div>
+  </div>
+  <div class="card">
+    <h2>一括取込（CSV）</h2>
+    <p class="hint">資源エネルギー庁の事業計画認定情報などのCSVを取り込めます（UTF-8／Shift_JISに対応）。見出しの名称から項目を自動で判定します。設備IDが同じ施設は、空欄でない項目だけ上書きします。</p>
+    <div class="grid">
+      <div><label for="impDefaultStatus">新規・既存の列がない場合の区分</label><select id="impDefaultStatus"><option>既存</option><option>新規</option></select></div>
+      <div><label for="impFile">CSVファイル</label><input id="impFile" type="file" accept=".csv,text/csv"></div>
+    </div>
+    <div id="impPreview" class="hidden"></div>
+    <div class="actions">
+      <button type="button" class="btn primary hidden" id="impRun">取り込みを実行</button>
+      <button type="button" class="btn secondary" id="tmplBtn">取込用テンプレートCSV</button>
+    </div>
+    <div id="impMsg" class="status hidden"></div>
+  </div>
+  <div class="card">
+    <h2>住所から座標を一括取得</h2>
+    <p class="hint">座標が未設定の施設について、設置場所の住所から国土地理院の住所検索で座標を求めます（通信が必要です）。地番まで一致しない場合があるため、地図で位置を確認してください。</p>
+    <div class="actions"><button type="button" class="btn secondary full" id="geoAllBtn">座標未設定の施設を一括で取得</button></div>
+    <div id="geoMsg" class="status hidden"></div>
+  </div>
+  <div class="card">
+    <h2>バックアップ・端末間のデータ統合</h2>
+    <p class="hint">記録はこの端末のブラウザ内だけに保存されます。定期的にバックアップしてください。他の調査者のバックアップを読み込むと、同じ施設・調査は重複せずに統合されます（施設は更新日時が新しい方を採用）。</p>
+    <label style="font-weight:600"><input type="checkbox" id="bkPhotos" checked style="width:auto"> 元写真を含める（ファイルが大きくなります）</label>
+    <div class="actions">
+      <button type="button" class="btn primary" id="bkExport">⬇ バックアップを保存</button>
+      <button type="button" class="btn secondary" id="bkImportBtn">⬆ バックアップを読み込んで統合</button>
+    </div>
+    <input id="bkFile" type="file" accept=".json,application/json" hidden>
+    <div id="bkMsg" class="status hidden"></div>
+  </div>
+  <div class="card">
+    <h2>全データの削除</h2>
+    <div class="actions"><button type="button" class="btn danger full" id="clearAll">全施設・全調査記録を削除</button></div>
+  </div>
+</section>
+</main>
+<div id="toast" class="toast"></div>
+
+<script>
+'use strict';
+const $=id=>document.getElementById(id);
+const pad=n=>String(n).padStart(2,'0');
+const DB_NAME='pv-site-map-v1';
+let db=null,facilities=[],surveys=[];
+let editingFacUid=null,currentDetailUid=null,prevView='map',listHl=null;
+function uid(){return Date.now().toString(36)+'-'+Math.random().toString(36).slice(2,10)}
+function nowLocal(){const d=new Date();return new Date(d-d.getTimezoneOffset()*60000).toISOString().slice(0,16)}
+function fileStamp(d=new Date()){return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate())+'_'+pad(d.getHours())+pad(d.getMinutes())+pad(d.getSeconds())}
+function safeName(s){return String(s||'').normalize('NFKC').replace(/[\\/:*?"<>|\s]+/g,'').slice(0,24)||'施設'}
+function num(v){if(v===''||v==null)return null;const n=Number(String(v).normalize('NFKC').replace(/[,，\s]/g,''));return Number.isFinite(n)?n:null}
+function esc(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),2600)}
+function msg(id,text,kind=''){const e=$(id);e.classList.remove('hidden');e.textContent=text;e.className='status'+(kind?' '+kind:'')}
+function validLatLon(lat,lon){return Number.isFinite(lat)&&Number.isFinite(lon)&&lat>20&&lat<46&&lon>122&&lon<154}
+function fmtLL(v){return Number.isFinite(v)?v.toFixed(6):''}
+function gmapUrl(f){return 'https://www.google.com/maps/search/?api=1&query='+f.lat+','+f.lon}
+function downloadBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},4000)}
+
+/* 電圧区分：パワコン出力(AC)で判定。未入力ならパネル容量(DC)で判定 */
+function kwOf(f){return num(f.acKw)??num(f.dcKw)}
+function voltClass(f){const k=kwOf(f);if(k==null)return '不明';return k<50?'低圧':k<2000?'高圧':'特高'}
+function voltLetter(v){return {低圧:'低',高圧:'高',特高:'特'}[v]||'？'}
+function pinColor(f){if(f.status==='新規')return '#1f6feb';if(f.status==='既存'){if(f.notification==='有')return '#1a9b45';if(f.notification==='無')return '#d62828';if(f.notification==='不達')return '#f08c00';return '#7a7a7a'}return '#555'}
+function hasLL(f){return validLatLon(f.lat,f.lon)}
+function surveysOf(fuid){return surveys.filter(s=>s.facilityUid===fuid).sort((a,b)=>String(a.datetime).localeCompare(String(b.datetime))||String(a.createdAt).localeCompare(String(b.createdAt)))}
+function surveyNo(s){return surveysOf(s.facilityUid).indexOf(s)+1}
+
+/* IndexedDB */
+function initDb(){return new Promise((res,rej)=>{const q=indexedDB.open(DB_NAME,1);q.onupgradeneeded=()=>{const d=q.result;if(!d.objectStoreNames.contains('facilities'))d.createObjectStore('facilities',{keyPath:'uid'});if(!d.objectStoreNames.contains('surveys'))d.createObjectStore('surveys',{keyPath:'uid'})};q.onsuccess=()=>{db=q.result;res()};q.onerror=()=>rej(q.error)})}
+function idb(store,mode,fn){return new Promise((res,rej)=>{const tx=db.transaction(store,mode);const st=tx.objectStore(store);const r=fn(st);tx.oncomplete=()=>res(r&&r.result);tx.onerror=()=>rej(tx.error)})}
+const getAll=s=>idb(s,'readonly',st=>st.getAll());
+const put=(s,v)=>idb(s,'readwrite',st=>st.put(v));
+const del=(s,k)=>idb(s,'readwrite',st=>st.delete(k));
+const clearStore=s=>idb(s,'readwrite',st=>st.clear());
+function putMany(s,arr){return new Promise((res,rej)=>{const tx=db.transaction(s,'readwrite');const st=tx.objectStore(s);arr.forEach(v=>st.put(v));tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
+
+/* EXIF */
+function readAscii(v,s,len){let r='';for(let i=0;i<len&&s+i<v.byteLength;i++){const c=v.getUint8(s+i);if(!c)break;r+=String.fromCharCode(c)}return r}
+async function readExif(file){const buf=await file.arrayBuffer();const v=new DataView(buf);if(v.byteLength<4||v.getUint16(0,false)!==0xffd8)return{};let o=2;while(o+4<v.byteLength){if(v.getUint8(o)!==0xff){o++;continue}const m=v.getUint8(o+1);if(m===0xda||m===0xd9)break;const len=v.getUint16(o+2,false);if(len<2||o+2+len>v.byteLength)break;if(m===0xe1&&readAscii(v,o+4,6)==='Exif'){try{return parseTiff(v,o+10)}catch(e){return{}}}o+=2+len}return{}}
+function parseTiff(v,t){const le=v.getUint16(t,false)===0x4949;const u16=p=>v.getUint16(p,le),u32=p=>v.getUint32(p,le);if(u16(t+2)!==42)throw Error('TIFF不正');const val=(e,type,count)=>{const sz={1:1,2:1,3:2,4:4,5:8,7:1,9:4,10:8}[type]||1;return sz*count<=4?e+8:t+u32(e+8)};const rat=p=>{const d=u32(p+4);return d?u32(p)/d:NaN};function ifd(off){const p=t+off;if(p<0||p+2>v.byteLength)return{};const n=u16(p),map={};for(let i=0;i<n;i++){const e=p+2+i*12;if(e+12>v.byteLength)break;map[u16(e)]={e,type:u16(e+2),count:u32(e+4)}}return map}const root=ifd(u32(t+4));let date='';if(root[0x8769]){const ex=ifd(u32(root[0x8769].e+8));const a=ex[0x9003];if(a)date=readAscii(v,val(a.e,a.type,a.count),a.count)}if(!date&&root[0x0132]){const a=root[0x0132];date=readAscii(v,val(a.e,a.type,a.count),a.count)}let lat=null,lon=null;if(root[0x8825]){const g=ifd(u32(root[0x8825].e+8));const str=tag=>{const a=g[tag];return a?readAscii(v,val(a.e,a.type,a.count),a.count):''};const dms=tag=>{const a=g[tag];if(!a)return null;const p=val(a.e,a.type,a.count);return rat(p)+rat(p+8)/60+rat(p+16)/3600};lat=dms(2);lon=dms(4);if(lat!=null&&str(1).toUpperCase()==='S')lat=-lat;if(lon!=null&&str(3).toUpperCase()==='W')lon=-lon}return{lat,lon,date}}
+function loadImage(file){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),img=new Image();img.onload=()=>{URL.revokeObjectURL(u);res(img)};img.onerror=()=>{URL.revokeObjectURL(u);rej(Error('画像を表示できません'))};img.src=u})}
+async function makeThumbnail(file){const img=await loadImage(file),scale=Math.min(1,720/img.naturalWidth,540/img.naturalHeight),w=Math.max(1,Math.round(img.naturalWidth*scale)),h=Math.max(1,Math.round(img.naturalHeight*scale)),c=document.createElement('canvas');c.width=w;c.height=h;const g=c.getContext('2d');g.fillStyle='#fff';g.fillRect(0,0,w,h);g.drawImage(img,0,0,w,h);return c.toDataURL('image/jpeg',.72)}
+function getGps(){return new Promise((res,rej)=>{if(!navigator.geolocation)return rej(Error('位置情報に対応していません'));navigator.geolocation.getCurrentPosition(p=>res({lat:p.coords.latitude,lon:p.coords.longitude,acc:p.coords.accuracy}),e=>rej(e),{enableHighAccuracy:true,timeout:20000,maximumAge:0})})}
+async function geocode(addr){const r=await fetch('https://msearch.gsi.go.jp/address-search/AddressSearch?q='+encodeURIComponent(addr));if(!r.ok)throw Error('検索失敗');const j=await r.json();if(!j||!j.length)return null;const c=j[0].geometry.coordinates;return{lat:c[1],lon:c[0],title:j[0].properties&&j[0].properties.title}}
+
+/* 画面切替 */
+function show(view){document.querySelectorAll('.view').forEach(e=>e.classList.add('hidden'));$('view-'+view).classList.remove('hidden');document.querySelectorAll('#nav button').forEach(b=>b.classList.toggle('active',b.dataset.view===view));$('filterCard').classList.toggle('hidden',!(view==='map'||view==='list'));if(view!=='detail'&&view!=='facility')prevView=view;if(view==='map')requestAnimationFrame(renderMap);if(view==='list')renderList();if(view==='survey')refreshSurveyFacilities();window.scrollTo({top:0,behavior:'instant'})}
+
+/* 検索・絞り込み */
+function filtered(){const kw=$('fKeyword').value.trim().normalize('NFKC').toLowerCase(),st=$('fStatus').value,nt=$('fNotif').value,ft=$('fFit').value,vt=$('fVolt').value,sv=$('fSurvey').value,co=$('fCoord').value;return facilities.filter(f=>{if(kw){const hay=[f.operator,f.operatorAddress,f.siteAddress,f.facilityId,f.other,f.remarks,f.notification,f.fitType].join(' ').normalize('NFKC').toLowerCase();if(!kw.split(/\s+/).every(k=>hay.includes(k)))return false}if(st&&f.status!==st)return false;if(nt){if(nt==='未届出'){if(!(f.notification==='無'||f.notification==='不達'))return false}else if(nt==='未入力'){if(f.notification)return false}else if(f.notification!==nt)return false}if(ft){if(ft==='未入力'){if(f.fitType)return false}else if(f.fitType!==ft)return false}if(vt&&voltClass(f)!==vt)return false;if(sv){const n=surveys.some(s=>s.facilityUid===f.uid);if(sv==='yes'?!n:n)return false}if(co){if(co==='yes'?!hasLL(f):hasLL(f))return false}return true})}
+function onFilter(){const n=filtered().length;$('fCount').textContent='該当 '+n+' 件 ／ 全 '+facilities.length+' 件';renderMap();renderList()}
+
+/* 地図（地理院タイル） */
+const LAYERS={std:'https://cyberjapandata.gsi.go.jp/xyz/std/{z}/{x}/{y}.png',photo:'https://cyberjapandata.gsi.go.jp/xyz/seamlessphoto/{z}/{x}/{y}.jpg'};
+const mapState={lat:36.15,lon:138.05,z:9,layer:'std',sel:null,me:null,pick:false};
+const MINZ=5,MAXZ=18;
+function worldXY(lat,lon,z){const s=256*Math.pow(2,z),sl=Math.sin(lat*Math.PI/180);return{x:(lon+180)/360*s,y:(0.5-Math.log((1+sl)/(1-sl))/(4*Math.PI))*s}}
+function fromWorld(x,y,z){const s=256*Math.pow(2,z),n=Math.PI-2*Math.PI*y/s;return{lat:180/Math.PI*Math.atan(Math.sinh(n)),lon:x/s*360-180}}
+function mapSize(){const m=$('map');return{W:m.clientWidth,H:m.clientHeight}}
+function origin(){const {W,H}=mapSize(),c=worldXY(mapState.lat,mapState.lon,mapState.z);return{ox:c.x-W/2,oy:c.y-H/2,W,H}}
+const tileCache=new Map();
+function renderMap(){const m=$('map');if(!m||m.offsetParent===null)return;$('pane').style.transform='';const {ox,oy,W,H}=origin(),z=mapState.z,n=Math.pow(2,z),need=new Set(),tl=$('tiles');
+  for(let tx=Math.floor(ox/256);tx<=Math.floor((ox+W)/256);tx++)for(let ty=Math.floor(oy/256);ty<=Math.floor((oy+H)/256);ty++){if(ty<0||ty>=n)continue;const wx=((tx%n)+n)%n,key=mapState.layer+'/'+z+'/'+tx+'/'+ty;need.add(key);let img=tileCache.get(key);if(!img){img=new Image();img.alt='';img.src=LAYERS[mapState.layer].replace('{z}',z).replace('{x}',wx).replace('{y}',ty);img.onerror=()=>{img.style.visibility='hidden'};tileCache.set(key,img)}img.style.left=(tx*256-ox)+'px';img.style.top=(ty*256-oy)+'px';if(img.parentNode!==tl)tl.appendChild(img)}
+  for(const [k,img] of tileCache){if(!need.has(k)){img.remove();tileCache.delete(k)}}
+  const mk=$('markers');mk.innerHTML='';const showLbl=z>=12;
+  filtered().filter(hasLL).forEach(f=>{const p=worldXY(f.lat,f.lon,z),x=p.x-ox,y=p.y-oy;if(x<-60||y<-60||x>W+250||y>H+60)return;const d=document.createElement('div');d.className='pin'+(mapState.sel===f.uid?' sel':'');d.style.left=x+'px';d.style.top=y+'px';d.title=f.operator||'';const col=pinColor(f);d.innerHTML='<svg width="28" height="38" viewBox="0 0 28 38"><path d="M14 37C14 37 1 22 1 13.5A13 13 0 0 1 27 13.5C27 22 14 37 14 37Z" fill="'+col+'" stroke="#fff" stroke-width="2"/><circle cx="14" cy="13.5" r="8.5" fill="#fff"/><text x="14" y="18" text-anchor="middle" font-size="12" font-weight="900" fill="'+col+'">'+voltLetter(voltClass(f))+'</text></svg>'+((showLbl||mapState.sel===f.uid)?'<span class="lbl">'+esc(f.operator||'(事業者未入力)')+'</span>':'');d.addEventListener('click',ev=>{ev.stopPropagation();jumpToList(f.uid)});mk.appendChild(d)});
+  if(mapState.me){const p=worldXY(mapState.me.lat,mapState.me.lon,z);const d=document.createElement('div');d.className='me';d.style.left=(p.x-ox)+'px';d.style.top=(p.y-oy)+'px';mk.appendChild(d)}}
+function setView(lat,lon,z){mapState.lat=lat;mapState.lon=lon;if(z!=null)mapState.z=Math.max(MINZ,Math.min(MAXZ,z));renderMap()}
+function zoomAt(dz,sx,sy){const {ox,oy,W,H}=origin();const nz=Math.max(MINZ,Math.min(MAXZ,mapState.z+dz));const k=Math.pow(2,nz-mapState.z);const wx=(ox+sx)*k,wy=(oy+sy)*k;const c=fromWorld(wx-sx+W/2,wy-sy+H/2,nz);mapState.z=nz;mapState.lat=c.lat;mapState.lon=c.lon;renderMap()}
+function fitAll(){const fs=filtered().filter(hasLL);if(!fs.length){toast('座標のある施設がありません');return}if(fs.length===1){setView(fs[0].lat,fs[0].lon,16);return}let a=90,b=-90,c=180,d=-180;fs.forEach(f=>{a=Math.min(a,f.lat);b=Math.max(b,f.lat);c=Math.min(c,f.lon);d=Math.max(d,f.lon)});const {W,H}=mapSize();let z=MAXZ;for(;z>MINZ;z--){const p1=worldXY(b,c,z),p2=worldXY(a,d,z);if(p2.x-p1.x<W-80&&p2.y-p1.y<H-80)break}setView((a+b)/2,(c+d)/2,z)}
+/* ピンのタップ → 一覧の該当施設へジャンプ */
+function jumpToList(u){const f=facilities.find(x=>x.uid===u);if(!f)return;mapState.sel=u;listHl=u;$('mapInfo').classList.add('hidden');show('list');requestAnimationFrame(()=>{const e=$('rec-'+u);if(e)e.scrollIntoView({behavior:'smooth',block:'start'});else toast('一覧に表示できませんでした')});toast('「'+(f.operator||'事業者未入力')+'」を一覧で表示しています')}
+/* 一覧の「地図」ボタンから戻ったときの情報表示 */
+function selectPin(u){mapState.sel=u;renderMap();const f=facilities.find(x=>x.uid===u);const box=$('mapInfo');if(!f){box.classList.add('hidden');return}const ss=surveysOf(u);box.classList.remove('hidden');box.innerHTML='<div class="survey"><div class="rec-title">'+esc(f.operator||'(事業者未入力)')+'</div>'+badgesHtml(f)+'<small class="hint">'+esc(f.siteAddress||'')+'　／　調査 '+ss.length+' 回'+(ss.length?'（最終 '+esc(ss[ss.length-1].datetime.replace('T',' '))+'）':'')+'</small><div class="actions"><button class="btn sm primary" id="miList">一覧で表示</button><button class="btn sm primary" id="miDetail">詳細</button><a class="btn sm secondary" style="text-align:center;text-decoration:none;display:flex;align-items:center;justify-content:center" target="_blank" rel="noopener" href="'+gmapUrl(f)+'">Googleマップで開く</a><button class="btn sm secondary" id="miSurvey">📷 現地調査</button></div></div>';$('miList').onclick=()=>jumpToList(u);$('miDetail').onclick=()=>openDetail(u);$('miSurvey').onclick=()=>startSurvey(u)}
+function initMap(){const m=$('map'),pane=$('pane');const pts=new Map();let start=null,pinch=null,moved=false;
+  m.addEventListener('pointerdown',e=>{if(e.target.closest('.pin,.mctl,.pickbar,.attr'))return;m.setPointerCapture(e.pointerId);pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pts.size===1){start={x:e.clientX,y:e.clientY};moved=false;pinch=null}else if(pts.size===2){const [a,b]=[...pts.values()];const r=m.getBoundingClientRect();pinch={d0:Math.hypot(a.x-b.x,a.y-b.y),mx:(a.x+b.x)/2-r.left,my:(a.y+b.y)/2-r.top,s:1,tx:0,ty:0};start=null}});
+  m.addEventListener('pointermove',e=>{if(!pts.has(e.pointerId))return;pts.set(e.pointerId,{x:e.clientX,y:e.clientY});if(pinch&&pts.size>=2){const [a,b]=[...pts.values()];const r=m.getBoundingClientRect();pinch.s=Math.hypot(a.x-b.x,a.y-b.y)/pinch.d0;pinch.tx=(a.x+b.x)/2-r.left-pinch.mx;pinch.ty=(a.y+b.y)/2-r.top-pinch.my;pane.style.transformOrigin=pinch.mx+'px '+pinch.my+'px';pane.style.transform='translate('+pinch.tx+'px,'+pinch.ty+'px) scale('+pinch.s+')';moved=true}else if(start){const dx=e.clientX-start.x,dy=e.clientY-start.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;pane.style.transformOrigin='0 0';pane.style.transform='translate('+dx+'px,'+dy+'px)'}});
+  const end=e=>{if(!pts.has(e.pointerId))return;pts.delete(e.pointerId);if(pinch){if(pts.size<2){const dz=Math.round(Math.log2(pinch.s));const {ox,oy,W,H}=origin();const nz=Math.max(MINZ,Math.min(MAXZ,mapState.z+dz));const k=Math.pow(2,nz-mapState.z);const wx=(ox+pinch.mx)*k,wy=(oy+pinch.my)*k;const sx=pinch.mx+pinch.tx,sy=pinch.my+pinch.ty;const c=fromWorld(wx-sx+W/2,wy-sy+H/2,nz);mapState.z=nz;mapState.lat=c.lat;mapState.lon=c.lon;pinch=null;start=null;pts.clear();renderMap()}return}if(start){const dx=e.clientX-start.x,dy=e.clientY-start.y;const r=m.getBoundingClientRect();if(!moved){pane.style.transform='';if(mapState.pick){const {ox,oy}=origin();const ll=fromWorld(ox+e.clientX-r.left,oy+e.clientY-r.top,mapState.z);finishPick(ll)}else{mapState.sel=null;$('mapInfo').classList.add('hidden');renderMap()}}else{const {ox,oy,W,H}=origin();const c=fromWorld(ox-dx+W/2,oy-dy+H/2,mapState.z);mapState.lat=c.lat;mapState.lon=c.lon;renderMap()}start=null}};
+  m.addEventListener('pointerup',end);m.addEventListener('pointercancel',end);
+  m.addEventListener('wheel',e=>{e.preventDefault();const r=m.getBoundingClientRect();zoomAt(e.deltaY<0?1:-1,e.clientX-r.left,e.clientY-r.top)},{passive:false});
+  $('zIn').onclick=()=>{const {W,H}=mapSize();zoomAt(1,W/2,H/2)};$('zOut').onclick=()=>{const {W,H}=mapSize();zoomAt(-1,W/2,H/2)};
+  $('mFit').onclick=fitAll;$('mLayer').onclick=()=>{mapState.layer=mapState.layer==='std'?'photo':'std';$('mLayer').textContent=mapState.layer==='std'?'🛰':'🗺';renderMap()};
+  $('mLocate').onclick=async()=>{toast('現在地を取得中…');try{const p=await getGps();mapState.me=p;setView(p.lat,p.lon,Math.max(mapState.z,15))}catch(e){toast('現在地を取得できませんでした')}};
+  $('pickCancel').onclick=()=>{mapState.pick=false;$('pickBar').classList.add('hidden');show('facility')};
+  window.addEventListener('resize',()=>renderMap())}
+function finishPick(ll){mapState.pick=false;$('pickBar').classList.add('hidden');setFacCoord(ll.lat,ll.lon,'地図で指定');show('facility');toast('位置を設定しました')}
+
+/* 一覧・詳細 */
+function badgesHtml(f){const v=voltClass(f),b=[];if(f.status)b.push('<span class="badge '+(f.status==='新規'?'b-new':'')+'">'+esc(f.status)+'</span>');if(f.status==='既存'||f.notification){const n=f.notification||'届出未入力';b.push('<span class="badge '+(n==='有'?'b-ok':n==='無'?'b-ng':n==='不達'?'b-nd':'')+'">届出 '+esc(n)+'</span>')}b.push('<span class="badge">'+esc(v==='不明'?'出力未入力':v)+'</span>');if(f.fitType)b.push('<span class="badge">'+esc(f.fitType)+'</span>');const k=kwOf(f);if(k!=null)b.push('<span class="badge">'+k.toLocaleString()+' kW</span>');if(!hasLL(f))b.push('<span class="badge b-nd">座標未設定</span>');return '<div>'+b.join('')+'</div>'}
+function renderList(){const box=$('list');if(!box)return;let fs=filtered();const sb=$('sortBy').value;const last=f=>{const s=surveysOf(f.uid);return s.length?s[s.length-1].datetime:''};fs.sort((a,b)=>sb==='updated'?String(b.updatedAt).localeCompare(String(a.updatedAt)):sb==='lastSurvey'?last(b).localeCompare(last(a)):sb==='kw'?(kwOf(b)??-1)-(kwOf(a)??-1):String(a.operator||'').localeCompare(String(b.operator||''),'ja'));$('listCount').textContent=fs.length;$('fCount').textContent='該当 '+fs.length+' 件 ／ 全 '+facilities.length+' 件';box.innerHTML='';if(!fs.length){box.innerHTML='<p class="hint">該当する施設がありません。</p>';return}
+  const LIMIT=300;let shown=fs.slice(0,LIMIT);const hf=listHl&&fs.find(x=>x.uid===listHl);if(hf&&!shown.includes(hf))shown=[hf,...shown.slice(0,LIMIT-1)];
+  shown.forEach(f=>{const ss=surveysOf(f.uid);const d=document.createElement('div');d.className='rec'+(f.uid===listHl?' hl':'');d.id='rec-'+f.uid;d.innerHTML='<div><div class="rec-title">'+esc(f.operator||'(事業者未入力)')+'</div>'+badgesHtml(f)+'<small>'+esc(f.siteAddress||'設置場所未入力')+(f.facilityId?'　設備ID：'+esc(f.facilityId):'')+'　調査 '+ss.length+' 回'+(f.other?'<br>その他：'+esc(f.other):'')+'</small></div>';const bt=document.createElement('div');bt.style.display='grid';bt.style.gap='5px';const b1=document.createElement('button');b1.className='btn sm primary';b1.textContent='詳細';b1.onclick=()=>openDetail(f.uid);bt.appendChild(b1);if(hasLL(f)){const b2=document.createElement('button');b2.className='btn sm secondary';b2.textContent='地図';b2.onclick=()=>{listHl=f.uid;show('map');setView(f.lat,f.lon,Math.max(mapState.z,16));selectPin(f.uid)};bt.appendChild(b2)}d.appendChild(bt);box.appendChild(d)});if(fs.length>LIMIT){const p=document.createElement('p');p.className='hint';p.textContent='先頭'+LIMIT+'件を表示しています。検索・絞り込みで件数を減らしてください。';box.appendChild(p)}}
+function openDetail(u){const f=facilities.find(x=>x.uid===u);if(!f)return;currentDetailUid=u;listHl=u;const ss=surveysOf(u);const kv=[['新規・既存',f.status],['条例届出',f.notification||'未入力'],['発電事業者',f.operator],['事業者住所',f.operatorAddress],['設置場所',f.siteAddress],['緯度・経度',hasLL(f)?fmtLL(f.lat)+', '+fmtLL(f.lon)+'（'+(f.coordSource||'')+'）':'未設定'],['FIT区分',f.fitType],['設備ID',f.facilityId],['出力(AC)',f.acKw!==''&&f.acKw!=null?f.acKw+' kW':''],['パネル容量(DC)',f.dcKw!==''&&f.dcKw!=null?f.dcKw+' kW':''],['電圧区分',voltClass(f)],['運転開始日',f.startDate],['その他',f.other],['備考',f.remarks],['更新日時',(f.updatedAt||'').replace('T',' ').slice(0,19)]];
+  const v=$('view-detail');v.innerHTML='<h2>'+esc(f.operator||'(事業者未入力)')+'</h2>'+badgesHtml(f)+'<div class="kv" style="margin-top:8px">'+kv.map(([k,val])=>'<div>'+k+'</div><div>'+esc(val||'－').replace(/\n/g,'<br>')+'</div>').join('')+'</div><div class="actions"><button class="btn primary" id="dEdit">✎ 台帳を編集</button><button class="btn primary" id="dSurvey">📷 現地調査を追加</button>'+(hasLL(f)?'<button class="btn secondary" id="dMap">地図で表示</button><a class="btn secondary" style="display:flex;align-items:center;justify-content:center;text-decoration:none" target="_blank" rel="noopener" href="'+gmapUrl(f)+'">Googleマップで開く</a>':'')+'<button class="btn warning" id="dBack">戻る</button><button class="btn danger" id="dDel">施設を削除</button></div><h3>現地調査の履歴（'+ss.length+'回）</h3><div id="dSurveys"></div>';
+  const sb=$('dSurveys');if(!ss.length)sb.innerHTML='<p class="hint">まだ調査記録がありません。</p>';
+  ss.slice().reverse().forEach(s=>{const n=ss.indexOf(s)+1;const d=document.createElement('div');d.className='survey';d.innerHTML='<div class="rec-title">第'+n+'回　'+esc(String(s.datetime).replace('T',' '))+'</div><small class="hint">調査者：'+esc([s.org,s.name].filter(Boolean).join('　'))+'　／　座標：'+(validLatLon(s.lat,s.lon)?fmtLL(s.lat)+', '+fmtLL(s.lon):'未取得')+'</small>'+(s.memo?'<div style="margin-top:4px">'+esc(s.memo).replace(/\n/g,'<br>')+'</div>':'')+'<div class="photos">'+(s.photos||[]).map(p=>'<div class="ph"><img src="'+p.thumb+'" alt=""><small>'+esc(p.type)+'</small></div>').join('')+'</div>';const a=document.createElement('div');a.className='actions';const b1=document.createElement('button');b1.className='btn sm secondary';b1.textContent='写真を保存（'+(s.photos||[]).length+'枚）';b1.disabled=!(s.photos||[]).length;b1.onclick=()=>savePhotos(s);const b2=document.createElement('button');b2.className='btn sm danger';b2.textContent='この調査を削除';b2.onclick=async()=>{if(!confirm('第'+n+'回の調査記録を削除しますか？'))return;await del('surveys',s.uid);surveys=surveys.filter(x=>x.uid!==s.uid);openDetail(u);toast('調査記録を削除しました')};a.append(b1,b2);d.appendChild(a);sb.appendChild(d)});
+  $('dEdit').onclick=()=>editFacility(u);$('dSurvey').onclick=()=>startSurvey(u);
+  $('dBack').onclick=()=>{if(prevView==='list'){show('list');requestAnimationFrame(()=>{const e=$('rec-'+u);if(e)e.scrollIntoView({block:'start'})})}else show(prevView)};
+  if($('dMap'))$('dMap').onclick=()=>{show('map');setView(f.lat,f.lon,Math.max(mapState.z,16));selectPin(u)};
+  $('dDel').onclick=async()=>{if(!confirm('「'+(f.operator||'')+'」と調査記録'+ss.length+'件を削除しますか？\nこの操作は元に戻せません。'))return;await del('facilities',u);for(const s of ss)await del('surveys',s.uid);facilities=facilities.filter(x=>x.uid!==u);surveys=surveys.filter(x=>x.facilityUid!==u);listHl=null;toast('施設を削除しました');show(prevView)};
+  show('detail')}
+function savePhotos(s){const f=facilities.find(x=>x.uid===s.facilityUid)||{};const n=surveyNo(s);(s.photos||[]).forEach((p,i)=>{const blob=p.blob||dataUrlBlob(p.thumb);setTimeout(()=>downloadBlob(blob,p.name||('pv_'+safeName(f.operator)+'_第'+n+'回_'+(i+1)+'.jpg')),i*400)})}
+function dataUrlBlob(u){return new Blob([dataUrlBytes(u)],{type:'image/jpeg'})}
+
+/* 施設登録・編集 */
+const FAC_FIELDS=['status','notification','operator','operatorAddress','siteAddress','fitType','facilityId','acKw','dcKw','startDate','other','remarks'];
+let facCoordSrc='';
+function setFacCoord(lat,lon,src){$('lat').value=fmtLL(lat);$('lon').value=fmtLL(lon);facCoordSrc=src;$('coordSrcOut').textContent='取得元：'+src}
+function resetFacForm(){editingFacUid=null;FAC_FIELDS.forEach(id=>$(id).value='');$('lat').value='';$('lon').value='';facCoordSrc='';$('coordSrcOut').textContent='取得元：未設定';$('facTitle').textContent='施設登録（台帳）';$('facSave').textContent='✓ 施設を保存';updVolt();msg('facMsg','発電事業者と新規・既存の別を入力して保存してください。')}
+function updVolt(){const v=voltClass({acKw:$('acKw').value,dcKw:$('dcKw').value});$('voltOut').textContent=v==='不明'?'－（出力を入力すると判定）':v+(num($('acKw').value)==null?'（パネル容量で判定）':'（パワコン出力で判定）')}
+function editFacility(u){const f=facilities.find(x=>x.uid===u);if(!f)return;show('facility');editingFacUid=u;FAC_FIELDS.forEach(id=>$(id).value=f[id]??'');if(hasLL(f))setFacCoord(f.lat,f.lon,f.coordSource||'登録済');else{$('lat').value='';$('lon').value='';facCoordSrc='';$('coordSrcOut').textContent='取得元：未設定'}$('facTitle').textContent='施設の編集：'+(f.operator||'');$('facSave').textContent='✓ 変更を保存';updVolt();msg('facMsg','編集中です。調査履歴は変更されません。','warn')}
+async function saveFacility(){if(!$('status').value){msg('facMsg','新規・既存の別を選択してください。','error');return}if(!$('operator').value.trim()){msg('facMsg','発電事業者を入力してください。','error');return}const lat=num($('lat').value),lon=num($('lon').value);if((lat!=null||lon!=null)&&!validLatLon(lat,lon)){msg('facMsg','緯度・経度が正しくありません（日本国内の値を入力してください）。','error');return}const now=new Date().toISOString();const old=editingFacUid?facilities.find(x=>x.uid===editingFacUid):null;const f={...(old||{uid:uid(),createdAt:now}),updatedAt:now};FAC_FIELDS.forEach(id=>f[id]=$(id).value.trim());f.lat=lat;f.lon=lon;f.coordSource=lat!=null?(facCoordSrc||'手入力'):'';if(f.facilityId&&!f.fitType)f.fitType='FIT';const dup=facilities.find(x=>x.uid!==f.uid&&f.facilityId&&x.facilityId===f.facilityId);if(dup&&!confirm('同じ設備ID「'+f.facilityId+'」の施設（'+(dup.operator||'')+'）が登録済みです。このまま保存しますか？'))return;await put('facilities',f);if(old)facilities[facilities.indexOf(old)]=f;else facilities.push(f);toast(old?'施設を更新しました':'施設を登録しました');resetFacForm();onFilter();openDetail(f.uid)}
+
+/* 現地調査 */
+let svPhotos=[],svCoordSrc='';
+const PHOTO_TYPES=['全景','標識','設備','周辺状況','その他'];
+function refreshSurveyFacilities(keep){const sel=$('svFacility'),cur=keep||sel.value,kw=$('svFacFilter').value.trim().normalize('NFKC').toLowerCase();const fs=facilities.filter(f=>!kw||[f.operator,f.siteAddress,f.facilityId].join(' ').normalize('NFKC').toLowerCase().includes(kw)||f.uid===cur).sort((a,b)=>String(a.operator||'').localeCompare(String(b.operator||''),'ja'));sel.innerHTML='<option value="">選択してください（'+fs.length+'件）</option>'+fs.map(f=>'<option value="'+f.uid+'">'+esc((f.operator||'(事業者未入力)')+'　'+(f.siteAddress||''))+'</option>').join('');sel.value=fs.some(f=>f.uid===cur)?cur:'';updSurveyFac()}
+function updSurveyFac(){const f=facilities.find(x=>x.uid===$('svFacility').value);if(!f){$('svFacInfo').textContent='施設を選択してください。施設が未登録の場合は、先に「施設登録」で登録してください。';$('svFacInfo').className='status';$('svCount').textContent='－';return}const ss=surveysOf(f.uid);$('svFacInfo').className='status ok';$('svFacInfo').textContent=(f.operator||'')+'／'+(f.siteAddress||'設置場所未入力')+'\n'+(ss.length?'前回：第'+ss.length+'回 '+String(ss[ss.length-1].datetime).replace('T',' '):'調査記録なし')+(hasLL(f)?'':'\n※施設の座標が未設定です');$('svCount').textContent='第'+(ss.length+1)+'回（保存時に確定）'}
+function startSurvey(u){show('survey');$('svFacFilter').value='';refreshSurveyFacilities(u);$('svFacility').value=u;updSurveyFac()}
+async function addSurveyPhotos(files){const list=[...files];if(!list.length)return;$('svPhotoMsg').textContent='写真を読み込み中…';let gpsGot=false;for(const file of list){try{const [ex,thumb]=await Promise.all([readExif(file),makeThumbnail(file)]);const p={id:uid(),blob:file,origName:file.name,thumb,date:ex.date||'',lat:validLatLon(ex.lat,ex.lon)?ex.lat:null,lon:validLatLon(ex.lat,ex.lon)?ex.lon:null,type:svPhotos.length===0?'全景':svPhotos.length===1?'標識':'その他'};svPhotos.push(p);if(p.lat!=null&&num($('svLat').value)==null){$('svLat').value=fmtLL(p.lat);$('svLon').value=fmtLL(p.lon);svCoordSrc='写真の位置情報';$('svCoordSrc').textContent='取得元：写真の位置情報';gpsGot=true}}catch(e){toast('読み込めない写真がありました：'+file.name)}}renderSvPhotos();$('svPhotoMsg').textContent=svPhotos.length+'枚選択中'+(gpsGot?'（写真から座標を取得しました）':'');$('svShootInput').value='';$('svPickInput').value=''}
+function renderSvPhotos(){const box=$('svPhotos');box.innerHTML='';svPhotos.forEach((p,i)=>{const d=document.createElement('div');d.className='ph';d.innerHTML='<img src="'+p.thumb+'" alt="写真'+(i+1)+'">';const s=document.createElement('select');s.innerHTML=PHOTO_TYPES.map(t=>'<option'+(t===p.type?' selected':'')+'>'+t+'</option>').join('');s.onchange=()=>p.type=s.value;const sm=document.createElement('small');sm.textContent=(p.lat!=null?'📍位置情報あり':'位置情報なし')+(p.date?' '+p.date:'');const b=document.createElement('button');b.className='btn sm danger';b.style.width='100%';b.style.marginTop='4px';b.textContent='外す';b.onclick=()=>{svPhotos.splice(i,1);renderSvPhotos();$('svPhotoMsg').textContent=svPhotos.length?svPhotos.length+'枚選択中':'写真未選択'};d.append(s,sm,b);box.appendChild(d)})}
+function resetSurvey(){svPhotos=[];renderSvPhotos();$('svPhotoMsg').textContent='写真未選択';$('svDate').value=nowLocal();$('svLat').value='';$('svLon').value='';svCoordSrc='';$('svCoordSrc').textContent='取得元：未設定';$('svMemo').value='';$('svOrg').value=localStorage.getItem('pv_svOrg')||'';$('svName').value=localStorage.getItem('pv_svName')||''}
+async function saveSurvey(){const f=facilities.find(x=>x.uid===$('svFacility').value);if(!f){msg('svMsg','調査する施設を選択してください。','error');return}if(!$('svDate').value){msg('svMsg','調査日時を入力してください。','error');return}if(!$('svName').value.trim()){msg('svMsg','調査者の氏名を入力してください。','error');return}const lat=num($('svLat').value),lon=num($('svLon').value);if((lat!=null||lon!=null)&&!validLatLon(lat,lon)){msg('svMsg','座標が正しくありません。','error');return}if(!svPhotos.length&&!confirm('写真がありません。写真なしで記録しますか？'))return;
+  const n=surveysOf(f.uid).length+1,st=fileStamp();const typeCount={};const photos=svPhotos.map(p=>{typeCount[p.type]=(typeCount[p.type]||0)+1;const m=(p.origName||'').match(/\.([A-Za-z0-9]{2,5})$/);return{type:p.type,name:'pv_'+safeName(f.operator)+'_第'+n+'回_'+p.type+typeCount[p.type]+'_'+st+'.'+(m?m[1].toLowerCase():'jpg'),origName:p.origName,blob:p.blob,thumb:p.thumb,date:p.date,lat:p.lat,lon:p.lon}});
+  const s={uid:uid(),facilityUid:f.uid,datetime:$('svDate').value,org:$('svOrg').value.trim(),name:$('svName').value.trim(),lat,lon,coordSource:lat!=null?(svCoordSrc||'手入力'):'',memo:$('svMemo').value.trim(),photos,createdAt:new Date().toISOString()};
+  await put('surveys',s);surveys.push(s);localStorage.setItem('pv_svOrg',s.org);localStorage.setItem('pv_svName',s.name);
+  if(lat!=null&&!hasLL(f)&&$('svApplyFac').checked){f.lat=lat;f.lon=lon;f.coordSource='現地調査（第'+n+'回）';f.updatedAt=new Date().toISOString();await put('facilities',f)}
+  toast('第'+n+'回の調査を記録しました');resetSurvey();updSurveyFac();msg('svMsg','第'+n+'回の調査を記録しました（写真'+photos.length+'枚）。写真は「施設の詳細」からファイル保存できます。','ok')}
+
+/* CSV */
+function csvEscape(v){const s=String(v??'');return /[",\r\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}
+function parseCsv(text){const rows=[];let row=[],cur='',q=false;for(let i=0;i<text.length;i++){const c=text[i];if(q){if(c==='"'){if(text[i+1]==='"'){cur+='"';i++}else q=false}else cur+=c}else if(c==='"')q=true;else if(c===','){row.push(cur);cur=''}else if(c==='\n'||c==='\r'){if(c==='\r'&&text[i+1]==='\n')i++;row.push(cur);rows.push(row);row=[];cur=''}else cur+=c}if(cur!==''||row.length){row.push(cur);rows.push(row)}return rows.filter(r=>r.some(x=>String(x).trim()!==''))}
+async function readText(file){const buf=await file.arrayBuffer();try{return new TextDecoder('utf-8',{fatal:true}).decode(buf).replace(/^\ufeff/,'')}catch(e){return new TextDecoder('shift_jis').decode(buf)}}
+const CSV_HEAD=['アプリID','新規・既存','発電事業者','発電事業者の住所','設置場所','緯度','経度','FIT区分','設備ID','出力(kW)','パネル容量(kW)','電圧区分','運転開始日','条例届出','その他','備考','調査回数','最終調査日','GoogleマップURL'];
+function facRow(f){const ss=surveysOf(f.uid);return[f.uid,f.status,f.operator,f.operatorAddress,f.siteAddress,fmtLL(f.lat),fmtLL(f.lon),f.fitType,f.facilityId,f.acKw,f.dcKw,voltClass(f),f.startDate,f.notification,f.other,f.remarks,ss.length,ss.length?String(ss[ss.length-1].datetime).replace('T',' '):'',hasLL(f)?gmapUrl(f):'']}
+function exportCsv(){const fs=filtered();if(!fs.length){msg('outMsg','出力する施設がありません。','error');return}const lines=[CSV_HEAD.join(',')].concat(fs.map(f=>facRow(f).map(csvEscape).join(',')));downloadBlob(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),'太陽光施設一覧_'+fileStamp().slice(0,13)+'.csv');msg('outMsg','施設一覧CSVを保存しました（'+fs.length+'件）。このCSVは編集して再度取り込めます。','ok')}
+const ALIASES={uid:['アプリid'],status:['新規・既存','新規既存','新規/既存','区分新規既存'],operator:['発電事業者','発電事業者名','事業者名','設置者名','設置者','事業者'],operatorAddress:['発電事業者の住所','事業者の住所','事業者住所','発電事業者住所','設置者住所'],siteAddress:['設置場所','発電設備の所在地','設備の所在地','所在地','設置場所住所','設置住所'],lat:['緯度','lat','latitude'],lon:['経度','lon','lng','longitude'],fitType:['fit区分','fit・非fit','区分fit'],facilityId:['設備id','認定設備id'],acKw:['出力kw','出力','発電出力kw','発電出力','パワコン出力kw','パワコン出力','交流出力kw'],dcKw:['パネル容量kw','パネル容量','太陽電池の合計出力kw','太陽電池の合計出力','太陽電池出力kw','太陽電池容量kw'],startDate:['運転開始日','運転開始年月日','運転開始報告年月','運転開始年月'],notification:['条例届出','既存届出','届出','届出の有無','条例届出の有無'],other:['その他'],remarks:['備考']};
+function normHead(h){return String(h||'').normalize('NFKC').toLowerCase().replace(/[\s()（）［］\[\]「」_]/g,'')}
+function detectMap(heads){const m={},used=new Set();const nh=heads.map(normHead);for(const [k,al] of Object.entries(ALIASES)){for(const a of al){const i=nh.findIndex((h,j)=>!used.has(j)&&h===normHead(a));if(i>=0){m[k]=i;used.add(i);break}}}return m}
+function normStatus(v){v=String(v||'').trim();return /新/.test(v)?'新規':/既/.test(v)?'既存':''}
+function normNotif(v){v=String(v||'').normalize('NFKC').trim();if(!v)return '';if(/不達/.test(v))return '不達';if(/^(有|あり|済|届出済|〇|○|yes)/i.test(v))return '有';if(/^(無|なし|未|×|no)/i.test(v))return '無';return ''}
+function normFit(v,fid){v=String(v||'').normalize('NFKC').trim();if(/自家/.test(v))return '自家消費';if(/非|ノン|non/i.test(v))return '非FIT';if(/fit|fip/i.test(v))return 'FIT';return fid?'FIT':''}
+function normDate(v){v=String(v||'').normalize('NFKC').trim();if(!v)return '';let m=v.match(/^(\d{4})[\/\-年.](\d{1,2})(?:[\/\-月.](\d{1,2}))?/);if(m)return m[1]+'-'+pad(m[2])+'-'+pad(m[3]||1);m=v.match(/^(\d{4})(\d{2})(\d{2})?$/);if(m)return m[1]+'-'+m[2]+'-'+(m[3]||'01');return ''}
+let impRows=null,impMap=null;
+async function previewImport(file){if(!file)return;try{const rows=parseCsv(await readText(file));if(rows.length<2){msg('impMsg','データ行がありません。','error');return}let hi=0;for(let i=0;i<Math.min(10,rows.length);i++){const mm=detectMap(rows[i]);if(mm.operator!=null||mm.facilityId!=null){hi=i;break}}const heads=rows[hi];impMap=detectMap(heads);impRows=rows.slice(hi+1);const labels={uid:'アプリID',status:'新規・既存',operator:'発電事業者',operatorAddress:'事業者住所',siteAddress:'設置場所',lat:'緯度',lon:'経度',fitType:'FIT区分',facilityId:'設備ID',acKw:'出力(AC)',dcKw:'パネル容量(DC)',startDate:'運転開始日',notification:'条例届出',other:'その他',remarks:'備考'};const pv=$('impPreview');pv.classList.remove('hidden');pv.innerHTML='<h3>項目の対応（'+impRows.length+'行）</h3><table class="map-tbl"><tr><th>アプリの項目</th><th>CSVの列</th></tr>'+Object.entries(labels).map(([k,l])=>'<tr><td>'+l+'</td><td>'+(impMap[k]!=null?esc(heads[impMap[k]]):'<span style="color:#999">（なし）</span>')+'</td></tr>').join('')+'</table>';if(impMap.operator==null&&impMap.facilityId==null){msg('impMsg','「発電事業者」または「設備ID」の列が見つかりません。見出しを確認するか、テンプレートCSVをご利用ください。','error');$('impRun').classList.add('hidden');return}$('impRun').classList.remove('hidden');msg('impMsg','対応を確認して「取り込みを実行」を押してください。','warn')}catch(e){console.error(e);msg('impMsg','CSVを読み込めませんでした。','error')}}
+async function runImport(){if(!impRows)return;const g=(r,k)=>impMap[k]!=null?String(r[impMap[k]]??'').trim():'';const now=new Date().toISOString(),def=$('impDefaultStatus').value;let add=0,upd=0,skip=0;const changed=[];
+  for(const r of impRows){const rec={status:normStatus(g(r,'status')),operator:g(r,'operator'),operatorAddress:g(r,'operatorAddress'),siteAddress:g(r,'siteAddress'),facilityId:g(r,'facilityId').normalize('NFKC'),acKw:num(g(r,'acKw'))??'',dcKw:num(g(r,'dcKw'))??'',startDate:normDate(g(r,'startDate')),notification:normNotif(g(r,'notification')),other:g(r,'other'),remarks:g(r,'remarks')};rec.fitType=normFit(g(r,'fitType'),rec.facilityId);if(impMap.fitType==null&&!rec.facilityId)rec.fitType='';const lat=num(g(r,'lat')),lon=num(g(r,'lon'));if(!rec.operator&&!rec.facilityId){skip++;continue}
+    const u=g(r,'uid');let f=(u&&facilities.find(x=>x.uid===u))||(rec.facilityId&&facilities.find(x=>x.facilityId===rec.facilityId));if(f){for(const [k,v] of Object.entries(rec))if(v!==''&&v!=null)f[k]=v;if(validLatLon(lat,lon)){f.lat=lat;f.lon=lon;f.coordSource='CSV取込'}f.updatedAt=now;upd++}else{f={uid:uid(),createdAt:now,updatedAt:now,...rec,status:rec.status||def,lat:validLatLon(lat,lon)?lat:null,lon:validLatLon(lat,lon)?lon:null,coordSource:validLatLon(lat,lon)?'CSV取込':''};facilities.push(f);add++}changed.push(f)}
+  await putMany('facilities',changed);impRows=null;$('impRun').classList.add('hidden');$('impPreview').classList.add('hidden');$('impFile').value='';onFilter();const noLL=changed.filter(f=>!hasLL(f)).length;msg('impMsg','取り込みました：新規追加 '+add+' 件／更新 '+upd+' 件'+(skip?'／スキップ '+skip+' 件（事業者名・設備IDなし）':'')+(noLL?'\n座標のない施設が '+noLL+' 件あります。下の「住所から座標を一括取得」をご利用ください。':''),'ok')}
+function exportTemplate(){const ex=['','既存','○○ソーラー合同会社','東京都千代田区○○1-1','長野県○○市大字○○1234','36.651289','138.181224','FIT','A123456B78','49.5','62.4','','2016-04-01','無','',''];const lines=[CSV_HEAD.slice(0,16).join(','),ex.map(csvEscape).join(',')];downloadBlob(new Blob(['\ufeff'+lines.join('\r\n')],{type:'text/csv;charset=utf-8'}),'太陽光施設_取込テンプレート.csv')}
+async function geocodeAll(){const fs=facilities.filter(f=>!hasLL(f)&&f.siteAddress);if(!fs.length){msg('geoMsg','住所があり座標が未設定の施設はありません。','ok');return}if(!confirm(fs.length+'件の座標を住所から取得します。よろしいですか？'))return;let ok=0,ng=0;for(let i=0;i<fs.length;i++){const f=fs[i];msg('geoMsg','取得中… '+(i+1)+'/'+fs.length);try{const r=await geocode(f.siteAddress);if(r&&validLatLon(r.lat,r.lon)){f.lat=r.lat;f.lon=r.lon;f.coordSource='住所検索（'+(r.title||'')+'）';f.updatedAt=new Date().toISOString();await put('facilities',f);ok++}else ng++}catch(e){ng++;if(i===0){msg('geoMsg','住所検索に接続できません。通信環境を確認してください。','error');return}}await new Promise(r=>setTimeout(r,250))}onFilter();msg('geoMsg','完了：取得 '+ok+' 件／取得できず '+ng+' 件\n住所検索の結果は町・字レベルの場合があります。地図で位置を確認してください。','ok')}
+
+/* KML */
+function kmlColor(hex){const h=hex.replace('#','');return 'ff'+h.slice(4,6)+h.slice(2,4)+h.slice(0,2)}
+function exportKml(){const fs=filtered().filter(hasLL);if(!fs.length){msg('outMsg','座標のある施設がありません。','error');return}const x=s=>xmlEsc(s);const styles=['#1f6feb','#1a9b45','#d62828','#f08c00','#7a7a7a','#555'].map(c=>'<Style id="s'+c.slice(1)+'"><IconStyle><color>'+kmlColor(c.length===4?'#555555':c)+'</color><Icon><href>https://maps.google.com/mapfiles/kml/pushpin/wht-pushpin.png</href></Icon></IconStyle></Style>').join('');const pm=fs.map(f=>{const ss=surveysOf(f.uid);const desc=['区分：'+(f.status||''),'条例届出：'+(f.notification||'未入力'),'電圧区分：'+voltClass(f),'出力：'+(kwOf(f)??'')+' kW','FIT区分：'+(f.fitType||''),'設備ID：'+(f.facilityId||''),'設置場所：'+(f.siteAddress||''),'運転開始日：'+(f.startDate||''),'調査回数：'+ss.length,'その他：'+(f.other||''),'備考：'+(f.remarks||'')].join('\n');return '<Placemark><name>'+x(f.operator||'(事業者未入力)')+'</name><description>'+x(desc)+'</description><styleUrl>#s'+pinColor(f).slice(1)+'</styleUrl><ExtendedData><Data name="新規既存"><value>'+x(f.status)+'</value></Data><Data name="条例届出"><value>'+x(f.notification)+'</value></Data><Data name="電圧区分"><value>'+x(voltClass(f))+'</value></Data><Data name="FIT区分"><value>'+x(f.fitType)+'</value></Data><Data name="設備ID"><value>'+x(f.facilityId)+'</value></Data></ExtendedData><Point><coordinates>'+f.lon+','+f.lat+',0</coordinates></Point></Placemark>'}).join('');const kml='<?xml version="1.0" encoding="UTF-8"?><kml xmlns="http://www.opengis.net/kml/2.2"><Document><name>野立て太陽光発電施設</name>'+styles+pm+'</Document></kml>';downloadBlob(new Blob([kml],{type:'application/vnd.google-earth.kml+xml'}),'太陽光施設_'+fileStamp().slice(0,13)+'.kml');msg('outMsg','KMLを保存しました（'+fs.length+'件）。Googleマイマップで「インポート」から読み込んでください。','ok')}
+
+/* バックアップ・統合 */
+function blobToDataUrl(b){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=()=>rej(r.error);r.readAsDataURL(b)})}
+async function exportBackup(){const inc=$('bkPhotos').checked;msg('bkMsg','バックアップを作成中…');const ss=[];for(const s of surveys){const photos=[];for(const p of s.photos||[]){const q={...p};delete q.blob;if(inc&&p.blob)q.blobData=await blobToDataUrl(p.blob);photos.push(q)}ss.push({...s,photos})}const data={app:'pv-site-map',version:1,exportedAt:new Date().toISOString(),facilities,surveys:ss};downloadBlob(new Blob([JSON.stringify(data)],{type:'application/json'}),'太陽光施設_バックアップ_'+fileStamp()+'.json');msg('bkMsg','バックアップを保存しました（施設 '+facilities.length+' 件／調査 '+surveys.length+' 件'+(inc?'／元写真を含む':'／元写真なし')+'）。','ok')}
+async function importBackup(file){if(!file)return;try{const data=JSON.parse(await readText(file));if(data.app!=='pv-site-map')throw Error('形式が違います');let fa=0,fu=0,sa=0;const fch=[],sch=[];for(const f of data.facilities||[]){const cur=facilities.find(x=>x.uid===f.uid);if(!cur){facilities.push(f);fch.push(f);fa++}else if(String(f.updatedAt)>String(cur.updatedAt)){Object.assign(cur,f);fch.push(cur);fu++}}for(const s of data.surveys||[]){if(surveys.some(x=>x.uid===s.uid))continue;s.photos=(s.photos||[]).map(p=>{const q={...p};if(q.blobData){q.blob=dataUrlBlob(q.blobData);delete q.blobData}return q});surveys.push(s);sch.push(s);sa++}await putMany('facilities',fch);await putMany('surveys',sch);onFilter();msg('bkMsg','統合しました：施設 追加 '+fa+' 件／更新 '+fu+' 件、調査 追加 '+sa+' 件（既にある調査記録は変更していません）。','ok')}catch(e){console.error(e);msg('bkMsg','バックアップを読み込めませんでした。このアプリで作成したJSONファイルを選択してください。','error')}$('bkFile').value=''}
+
+/* XLSX生成 */
+const U8=s=>new TextEncoder().encode(s);
+function xmlEsc(s){return String(s??'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&apos;')}
+function colName(n){let s='';while(n){n--;s=String.fromCharCode(65+n%26)+s;n=Math.floor(n/26)}return s}
+function cInline(col,row,val,style=4){return '<c r="'+col+row+'" s="'+style+'" t="inlineStr"><is><t xml:space="preserve">'+xmlEsc(val)+'</t></is></c>'}
+function cNum(col,row,val,style=4){return '<c r="'+col+row+'" s="'+style+'"><v>'+Number(val)+'</v></c>'}
+function rowXml(row,cells,height){return '<row r="'+row+'"'+(height?' ht="'+height+'" customHeight="1"':'')+'>'+cells.join('')+'</row>'}
+function dataUrlBytes(url){const b64=String(url||'').split(',')[1]||'',bin=atob(b64),u=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)u[i]=bin.charCodeAt(i);return u}
+function sheetXml(title,headers,rows,numCols,widths,rowH,drawing){const last=colName(headers.length),out=[];out.push(rowXml(1,[cInline('A',1,title,2)],28));out.push(rowXml(2,headers.map((h,i)=>cInline(colName(i+1),2,h,1)),32));rows.forEach((vals,i)=>{const n=3+i;out.push(rowXml(n,vals.map((v,j)=>{const col=colName(j+1);if(numCols[j]&&v!==''&&v!=null&&Number.isFinite(Number(v)))return cNum(col,n,v,numCols[j]);return cInline(col,n,v,4)}),rowH))});const end=Math.max(3,2+rows.length);return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><dimension ref="A1:'+last+end+'"/><sheetViews><sheetView workbookViewId="0"><pane ySplit="2" topLeftCell="A3" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews><sheetFormatPr defaultRowHeight="18"/><cols>'+widths.map((w,i)=>'<col min="'+(i+1)+'" max="'+(i+1)+'" width="'+w+'" customWidth="1"/>').join('')+'</cols><sheetData>'+out.join('')+'</sheetData><autoFilter ref="A2:'+last+end+'"/><mergeCells count="1"><mergeCell ref="A1:'+last+'1"/></mergeCells><pageMargins left="0.3" right="0.3" top="0.5" bottom="0.5" header="0.2" footer="0.2"/><pageSetup orientation="landscape" fitToWidth="1" fitToHeight="0"/>'+(drawing?'<drawing r:id="rId1"/>':'')+'</worksheet>'}
+function drawingXml(n,col){let pics='';for(let i=0;i<n;i++){const id=i+1;pics+='<xdr:oneCellAnchor><xdr:from><xdr:col>'+col+'</xdr:col><xdr:colOff>47625</xdr:colOff><xdr:row>'+(2+i)+'</xdr:row><xdr:rowOff>47625</xdr:rowOff></xdr:from><xdr:ext cx="2952750" cy="2190750"/><xdr:pic><xdr:nvPicPr><xdr:cNvPr id="'+id+'" name="写真'+id+'"/><xdr:cNvPicPr/></xdr:nvPicPr><xdr:blipFill><a:blip xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships" r:embed="rId'+id+'"/><a:stretch><a:fillRect/></a:stretch></xdr:blipFill><xdr:spPr><a:prstGeom prst="rect"><a:avLst/></a:prstGeom></xdr:spPr></xdr:pic><xdr:clientData/></xdr:oneCellAnchor>'}return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><xdr:wsDr xmlns:xdr="http://schemas.openxmlformats.org/drawingml/2006/spreadsheetDrawing" xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main">'+pics+'</xdr:wsDr>'}
+function stylesXml(){return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><numFmts count="2"><numFmt numFmtId="164" formatCode="#,##0.0#"/><numFmt numFmtId="165" formatCode="0.000000"/></numFmts><fonts count="3"><font><sz val="10"/><name val="Yu Gothic"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="10"/><name val="Yu Gothic"/></font><font><b/><color rgb="FFFFFFFF"/><sz val="14"/><name val="Yu Gothic"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF176B3A"/><bgColor indexed="64"/></patternFill></fill></fills><borders count="2"><border><left/><right/><top/><bottom/><diagonal/></border><border><left style="thin"><color rgb="FFC9DDD0"/></left><right style="thin"><color rgb="FFC9DDD0"/></right><top style="thin"><color rgb="FFC9DDD0"/></top><bottom style="thin"><color rgb="FFC9DDD0"/></bottom><diagonal/></border></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="7"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="1" xfId="0" applyAlignment="1"><alignment horizontal="center" vertical="center" wrapText="1"/></xf><xf numFmtId="0" fontId="2" fillId="2" borderId="0" xfId="0" applyAlignment="1"><alignment horizontal="left" vertical="center"/></xf><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="0" fillId="0" borderId="1" xfId="0" applyAlignment="1"><alignment vertical="center" wrapText="1"/></xf><xf numFmtId="164" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf><xf numFmtId="165" fontId="0" fillId="0" borderId="1" xfId="0" applyNumberFormat="1" applyAlignment="1"><alignment horizontal="right" vertical="center"/></xf></cellXfs><cellStyles count="1"><cellStyle name="標準" xfId="0" builtinId="0"/></cellStyles></styleSheet>'}
+let CRC_TABLE=null;function crc32(u){if(!CRC_TABLE){CRC_TABLE=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=(c&1)?0xedb88320^(c>>>1):c>>>1;CRC_TABLE[n]=c>>>0}}let c=0xffffffff;for(const b of u)c=CRC_TABLE[(c^b)&255]^(c>>>8);return(c^0xffffffff)>>>0}
+function push16(a,n){a.push(n&255,(n>>>8)&255)}function push32(a,n){a.push(n&255,(n>>>8)&255,(n>>>16)&255,(n>>>24)&255)}
+function concatU8(parts){const len=parts.reduce((s,p)=>s+p.length,0),u=new Uint8Array(len);let o=0;parts.forEach(p=>{u.set(p,o);o+=p.length});return u}
+function zipStore(entries){const locals=[],centrals=[];let offset=0;const now=new Date(),dosTime=((now.getHours()&31)<<11)|((now.getMinutes()&63)<<5)|((Math.floor(now.getSeconds()/2))&31),dosDate=(((now.getFullYear()-1980)&127)<<9)|(((now.getMonth()+1)&15)<<5)|(now.getDate()&31);for(const e of entries){const name=U8(e.name),data=e.data instanceof Uint8Array?e.data:U8(e.data),crc=crc32(data),lh=[];push32(lh,0x04034b50);push16(lh,20);push16(lh,0x0800);push16(lh,0);push16(lh,dosTime);push16(lh,dosDate);push32(lh,crc);push32(lh,data.length);push32(lh,data.length);push16(lh,name.length);push16(lh,0);const local=concatU8([new Uint8Array(lh),name,data]);locals.push(local);const ch=[];push32(ch,0x02014b50);push16(ch,20);push16(ch,20);push16(ch,0x0800);push16(ch,0);push16(ch,dosTime);push16(ch,dosDate);push32(ch,crc);push32(ch,data.length);push32(ch,data.length);push16(ch,name.length);push16(ch,0);push16(ch,0);push16(ch,0);push16(ch,0);push32(ch,0);push32(ch,offset);centrals.push(concatU8([new Uint8Array(ch),name]));offset+=local.length}const central=concatU8(centrals),end=[];push32(end,0x06054b50);push16(end,0);push16(end,0);push16(end,entries.length);push16(end,entries.length);push32(end,central.length);push32(end,offset);push16(end,0);return concatU8([...locals,central,new Uint8Array(end)])}
+function buildXlsx(fs){const R='http://schemas.openxmlformats.org/officeDocument/2006/relationships';const fset=new Set(fs.map(f=>f.uid));const facName=u=>{const f=facilities.find(x=>x.uid===u);return f?f.operator:''};const facAddr=u=>{const f=facilities.find(x=>x.uid===u);return f?f.siteAddress:''};
+  const s1h=['No.','新規・既存','発電事業者','発電事業者の住所','設置場所','緯度','経度','FIT区分','設備ID','出力(kW)','パネル容量(kW)','電圧区分','運転開始日','条例届出','調査回数','最終調査日','その他','備考','GoogleマップURL'];
+  const s1=fs.map((f,i)=>{const r=facRow(f);return[i+1,r[1],r[2],r[3],r[4],f.lat??'',f.lon??'',r[7],r[8],r[9],r[10],r[11],r[12],r[13],r[16],r[17],r[14],r[15],r[18]]});
+  const svs=surveys.filter(s=>fset.has(s.facilityUid)).sort((a,b)=>String(facName(a.facilityUid)).localeCompare(String(facName(b.facilityUid)),'ja')||String(a.datetime).localeCompare(String(b.datetime)));
+  const s2h=['発電事業者','設置場所','調査回数','調査日時','調査者の所属','調査者の氏名','緯度','経度','写真枚数','調査メモ'];
+  const s2=svs.map(s=>[facName(s.facilityUid),facAddr(s.facilityUid),'第'+surveyNo(s)+'回',String(s.datetime).replace('T',' '),s.org,s.name,s.lat??'',s.lon??'',(s.photos||[]).length,s.memo]);
+  const phs=[];svs.forEach(s=>(s.photos||[]).forEach(p=>phs.push({s,p})));
+  const s3h=['発電事業者','調査回数','調査日時','写真の種類','写真ファイル名','写真'];
+  const s3=phs.map(({s,p})=>[facName(s.facilityUid),'第'+surveyNo(s)+'回',String(s.datetime).replace('T',' '),p.type,p.name,'']);
+  const has=phs.length>0,E=[];
+  E.push({name:'[Content_Types].xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Default Extension="jpeg" ContentType="image/jpeg"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>'+[1,2,3].map(i=>'<Override PartName="/xl/worksheets/sheet'+i+'.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>').join('')+'<Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/>'+(has?'<Override PartName="/xl/drawings/drawing1.xml" ContentType="application/vnd.openxmlformats-officedocument.drawing+xml"/>':'')+'</Types>'});
+  E.push({name:'_rels/.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+R+'/officeDocument" Target="xl/workbook.xml"/></Relationships>'});
+  E.push({name:'xl/workbook.xml',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="'+R+'"><bookViews><workbookView/></bookViews><sheets><sheet name="施設一覧" sheetId="1" r:id="rId1"/><sheet name="調査履歴" sheetId="2" r:id="rId2"/><sheet name="調査写真" sheetId="3" r:id="rId3"/></sheets></workbook>'});
+  E.push({name:'xl/_rels/workbook.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+[1,2,3].map(i=>'<Relationship Id="rId'+i+'" Type="'+R+'/worksheet" Target="worksheets/sheet'+i+'.xml"/>').join('')+'<Relationship Id="rId4" Type="'+R+'/styles" Target="styles.xml"/></Relationships>'});
+  E.push({name:'xl/styles.xml',data:stylesXml()});
+  E.push({name:'xl/worksheets/sheet1.xml',data:sheetXml('野立て太陽光発電施設　施設一覧',s1h,s1,{0:5,5:6,6:6,9:5,10:5,14:5},[6,9,24,26,30,12,12,9,14,10,11,9,12,9,9,17,28,28,40],30,false)});
+  E.push({name:'xl/worksheets/sheet2.xml',data:sheetXml('現地調査履歴',s2h,s2,{6:6,7:6,8:5},[24,30,9,17,18,16,12,12,9,40],30,false)});
+  E.push({name:'xl/worksheets/sheet3.xml',data:sheetXml('調査写真',s3h,s3,{},[24,9,17,11,40,44],has?180:null,has)});
+  if(has){E.push({name:'xl/worksheets/_rels/sheet3.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="'+R+'/drawing" Target="../drawings/drawing1.xml"/></Relationships>'});E.push({name:'xl/drawings/drawing1.xml',data:drawingXml(phs.length,5)});E.push({name:'xl/drawings/_rels/drawing1.xml.rels',data:'<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">'+phs.map((_,i)=>'<Relationship Id="rId'+(i+1)+'" Type="'+R+'/image" Target="../media/image'+(i+1)+'.jpeg"/>').join('')+'</Relationships>'});phs.forEach(({p},i)=>E.push({name:'xl/media/image'+(i+1)+'.jpeg',data:dataUrlBytes(p.thumb)}))}
+  return zipStore(E)}
+function exportExcel(){const fs=filtered();if(!fs.length){msg('outMsg','出力する施設がありません。','error');return}try{msg('outMsg','写真入りExcelを作成しています…');const bytes=buildXlsx(fs);downloadBlob(new Blob([bytes],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}),'太陽光施設_'+fileStamp().slice(0,13)+'.xlsx');msg('outMsg','写真入りExcelを保存しました（施設 '+fs.length+' 件）。','ok')}catch(e){console.error(e);msg('outMsg','Excelの作成に失敗しました。絞り込みで件数を減らしてお試しください。','error')}}
+
+/* 初期化 */
+async function init(){try{await initDb();facilities=await getAll('facilities');surveys=await getAll('surveys')}catch(e){alert('記録用データベースを開けません。Chrome または Edge でこのHTMLを開いてください。')}
+  document.querySelectorAll('#nav button').forEach(b=>b.onclick=()=>{if(b.dataset.view==='list')listHl=null;if(b.dataset.view==='facility'&&!editingFacUid)resetFacForm();show(b.dataset.view)});
+  $('fKeyword').addEventListener('input',onFilter);['fStatus','fNotif','fFit','fVolt','fSurvey','fCoord'].forEach(id=>$(id).addEventListener('change',onFilter));
+  $('fToggle').onclick=()=>{$('fMore').classList.toggle('hidden');$('fToggle').textContent=$('fMore').classList.contains('hidden')?'絞込▼':'絞込▲'};
+  $('fClear').onclick=()=>{['fKeyword','fStatus','fNotif','fFit','fVolt','fSurvey','fCoord'].forEach(id=>$(id).value='');onFilter()};
+  $('sortBy').onchange=renderList;
+  initMap();
+  ['acKw','dcKw'].forEach(id=>$(id).addEventListener('input',updVolt));['lat','lon'].forEach(id=>$(id).addEventListener('input',()=>{facCoordSrc='手入力';$('coordSrcOut').textContent='取得元：手入力'}));
+  $('facPhotoBtn').onclick=()=>$('facPhotoInput').click();
+  $('facPhotoInput').onchange=async e=>{const f=e.target.files[0];if(!f)return;const ex=await readExif(f);if(validLatLon(ex.lat,ex.lon)){setFacCoord(ex.lat,ex.lon,'写真の位置情報');toast('写真から座標を取得しました')}else msg('facMsg','この写真には位置情報がありません。','error');e.target.value=''};
+  $('facGpsBtn').onclick=async()=>{msg('facMsg','現在地を取得中…');try{const p=await getGps();setFacCoord(p.lat,p.lon,'現在地GPS（精度約'+Math.round(p.acc)+'m）');msg('facMsg','現在地を設定しました。','ok')}catch(e){msg('facMsg','現在地を取得できませんでした。端末の位置情報の許可を確認してください。','error')}};
+  $('facPickBtn').onclick=()=>{const la=num($('lat').value),lo=num($('lon').value);mapState.pick=true;show('map');$('pickBar').classList.remove('hidden');if(validLatLon(la,lo))setView(la,lo,Math.max(mapState.z,16))};
+  $('facGeoBtn').onclick=async()=>{const a=$('siteAddress').value.trim();if(!a){msg('facMsg','設置場所の住所を入力してください。','error');return}msg('facMsg','住所を検索中…');try{const r=await geocode(a);if(r){setFacCoord(r.lat,r.lon,'住所検索（'+(r.title||'')+'）');msg('facMsg','住所から座標を設定しました（'+(r.title||'')+'）。地番まで一致しない場合があるため、地図で確認してください。','ok')}else msg('facMsg','住所が見つかりませんでした。','error')}catch(e){msg('facMsg','住所検索に接続できません（通信が必要です）。','error')}};
+  $('facSave').onclick=saveFacility;$('facReset').onclick=resetFacForm;$('facCancel').onclick=()=>{const u=editingFacUid;resetFacForm();if(u)openDetail(u);else show(prevView)};
+  $('svFacFilter').addEventListener('input',()=>refreshSurveyFacilities());$('svFacility').onchange=updSurveyFac;
+  $('svShoot').onclick=()=>$('svShootInput').click();$('svPick').onclick=()=>$('svPickInput').click();
+  $('svShootInput').onchange=e=>addSurveyPhotos(e.target.files);$('svPickInput').onchange=e=>addSurveyPhotos(e.target.files);
+  $('svGps').onclick=async()=>{msg('svMsg','現在地を取得中…');try{const p=await getGps();$('svLat').value=fmtLL(p.lat);$('svLon').value=fmtLL(p.lon);svCoordSrc='現在地GPS';$('svCoordSrc').textContent='取得元：現在地GPS（精度約'+Math.round(p.acc)+'m）';msg('svMsg','現在地を設定しました。','ok')}catch(e){msg('svMsg','現在地を取得できませんでした。','error')}};
+  $('svUseFac').onclick=()=>{const f=facilities.find(x=>x.uid===$('svFacility').value);if(!f||!hasLL(f)){msg('svMsg','施設の座標が未設定です。','error');return}$('svLat').value=fmtLL(f.lat);$('svLon').value=fmtLL(f.lon);svCoordSrc='施設の座標';$('svCoordSrc').textContent='取得元：施設の座標'};
+  ['svLat','svLon'].forEach(id=>$(id).addEventListener('input',()=>{svCoordSrc='手入力';$('svCoordSrc').textContent='取得元：手入力'}));
+  $('svSave').onclick=saveSurvey;$('svReset').onclick=()=>{resetSurvey();msg('svMsg','入力をクリアしました。')};$('svToDetail').onclick=()=>{const u=$('svFacility').value;if(u)openDetail(u);else toast('施設を選択してください')};
+  $('xlsxBtn').onclick=exportExcel;$('csvBtn').onclick=exportCsv;$('kmlBtn').onclick=exportKml;
+  $('impFile').onchange=e=>previewImport(e.target.files[0]);$('impRun').onclick=runImport;$('tmplBtn').onclick=exportTemplate;$('geoAllBtn').onclick=geocodeAll;
+  $('bkExport').onclick=exportBackup;$('bkImportBtn').onclick=()=>$('bkFile').click();$('bkFile').onchange=e=>importBackup(e.target.files[0]);
+  $('clearAll').onclick=async()=>{if(!facilities.length&&!surveys.length)return;if(!confirm('全施設・全調査記録を削除しますか？\n先にバックアップを保存することをおすすめします。'))return;if(!confirm('本当に削除しますか？この操作は元に戻せません。'))return;await clearStore('facilities');await clearStore('surveys');facilities=[];surveys=[];listHl=null;onFilter();toast('全データを削除しました')};
+  resetFacForm();resetSurvey();onFilter();show('map');if(facilities.some(hasLL))setTimeout(fitAll,50)}
+if(typeof document!=='undefined')init();
+</script>
+</body>
+</html>
